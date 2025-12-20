@@ -1,0 +1,118 @@
+{
+    "name": "MIL_Lymphoma",
+    "train_mode": "train",
+    "run_id": "20x_resnet50_ABMIL",
+    "files": {
+      "comment": "",
+      "data_sheet": "/data/MIP/Africa-lymphoma-UNC-project/train.csv",
+      "inference_data_sheet": null,
+      "inference_data_location": null,
+      "data_location": "/data/MIP/Africa-lymphoma-UNC-project/trident_data/20x_256px_0px_overlap/features_resnet50/",
+      "training_path": "/data/MIP/Africa-lymphoma-UNC-project/training/MIL_Lymphoma/",
+      "test_file": "/data/MIP/Africa-lymphoma-UNC-project/test.csv"
+    },
+    "inputs": {
+      "label_name":"label_binary",
+      "test_size": 0.2
+    },
+    "arch": {
+      "type": "abmil",
+      "args": {
+        "multiclass":true,
+        "use_tme":false,
+        "out_channels": 1,
+        "embed_dim":1024,
+        "D_inner":512,
+        "n_token":6,
+        "mask_drop":0.6, 
+        "n_masked_patch":10,
+        "pretrained_model_path": null
+      }
+    }, 
+    "optimizer": {
+      "type": "Lookahead_RAdam",
+      "args": {
+        "lr": 5e-3,
+        "encoder_lr": 5e-4,
+        "mil_lr": 5e-3,
+        "min_lr": 1e-7,
+        "warmup_lr": 1e-8,
+        "weight_decay": 1e-5,
+        "amsgrad": true,
+        "eps": 1e-8,
+        "betas": [0.9,0.999],
+        "momentum": 0.9
+      }
+    },
+    "loss": {
+    "type": "bce_focal_loss",
+    "args": {
+      "alpha": 0.25,
+      "gamma": 2.0,
+      "reduction": "mean",
+      "label_smoothing":0.1,
+      "pos_weight":0.5
+    }
+  },
+    "metrics": [
+      "auc"
+    ],
+    "lr_scheduler": {
+      "type": "CosineAnnealingLR",
+      "args": {
+        "decay_epochs":10,
+        "warmup_prefix":true,
+        "decay_rate":0.1,
+        "T_max": 500,
+        "eta_min": 1e-7,
+        "gamma":0.1
+      }
+    },
+    "trainer": {
+      "epochs": 100,
+      "warmup_epochs": 5,
+      "cv_fold": 5,
+      "accumulate_steps": 1,
+      "mixed_precision": true,
+      "clip_grad": 5.0,
+      "cluster":false,
+      "cluster_num":8,
+  
+      "save_dir": "/data/MIP/Africa-lymphoma-UNC-project/training/MIL_Lymphoma/saved/",
+      "save_period": 1,
+      "verbosity": 2,
+      "monitor": "max val_auc",
+      "early_stop": 100,
+      "auto_resume": false,
+      "tensorboard": false
+    },
+  
+    "data_loader_train": {
+      "type": "BaseDataLoader",
+      "args": {
+        "batch_size": 1,
+        "shuffle": true,
+        "num_workers": 8,
+        "validation_split": 0
+      }
+    },
+    "data_loader_valid": {
+      "type": "BaseDataLoader", 
+      "args": {
+        "batch_size": 1,
+        "shuffle": false,
+        "num_workers": 8,
+        "validation_split": 0
+      }
+    },
+    "data_loader_test": {
+      "type": "BaseDataLoader",
+      "args": {
+        "batch_size": 1,
+        "shuffle": false,
+        "num_workers": 8,
+        "validation_split": 0
+      }
+    }
+  }
+  
